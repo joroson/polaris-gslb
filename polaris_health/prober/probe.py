@@ -40,6 +40,8 @@ class Probe(object):
 
         # reason for the status
         self.status_reason = None
+        # dynamically set the weight based on healthcheck response.
+        self.weight = None
 
     def run(self):
         """Run the monitor code"""
@@ -58,6 +60,10 @@ class Probe(object):
         else:
             self.status = True
             self.status_reason = "monitor passed"
+        # set the weight if enabled and using an external check.
+        if self.monitor.__class__.__name__ is 'External':
+            if self.monitor.dynamic_weight:
+                self.weight = self.monitor.weight
 
     def __str__(self):
         s = 'Probe('
