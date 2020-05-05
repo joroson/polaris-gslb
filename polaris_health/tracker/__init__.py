@@ -287,7 +287,7 @@ class Tracker(multiprocessing.Process):
         """
         if (pool.lb_method != 'twrr') and (pool.lb_method != 'wrr'):
             return
-        if probe_response.weight is not member.weight:
+        if probe_response.weight != member.weight:
             member.weight = probe_response.weight
             global STATE_TIMESTAMP
             STATE_TIMESTAMP = time.time()
