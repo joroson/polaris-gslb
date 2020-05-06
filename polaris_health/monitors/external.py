@@ -67,11 +67,12 @@ class External(BaseMonitor):
         else:
             self.args = []
         ### result ###
-        if type(result) != str:
-            log_msg = 'result is not set or is not a string'
-            LOG.error(log_msg)
-            raise Error(log_msg)
-        self.result = result.strip()
+        if result is not None:
+            if type(result) != str:
+                log_msg = 'result is not set or is not a string'
+                LOG.error(log_msg)
+                raise Error(log_msg)
+            self.result = result.strip()
         ### dynamic weight ###
         # dynamically set the member weight based on the returned value from the
         # external script.
@@ -109,15 +110,22 @@ class External(BaseMonitor):
         if cmd.returncode != 0:
             log_msg = ('External Check Failed: Reason: {}'.format(cmd.stderr.rstrip()))
             raise MonitorFailed(log_msg)
-
-        self.dynamic_weight = True
+        stdout = cmd.stdout.rstrip()
         if self.dynamic_weight:
-            self.weight = random.randint(1, 10)
-            # TODO: check weight is not out of bounds 0-10 probabily cast it
-            # to an integer
-            return
-        elif cmd.stdout.rstrip() == self.result:
+            try:
+                weight = int(stdout)
+            except ValueError:
+                log_msg = ('External Check Failed:{} cannot set weight is not an integer'.format(stdout))
+                raise MonitorFailed(log_msg)
+            if weight < 0 or weight > 10:
+                log_msg = 'External Check Failed: weight is out of bounds 0-10'
+                raise MonitorFailed(log_msg)
+            else:
+                self.weight = weight
+                return
+        # check the return string matches if we are not updating the weight
+        elif stdout == self.result:
             return
         else:
-            log_msg = ('The external check returned result:{}'.format(cmd.stdout.rstrip()))
+            log_msg = ('External Check Failed: returned result:{}'.format(stdout))
             raise MonitorFailed(log_msg)
