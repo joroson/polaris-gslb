@@ -3,6 +3,8 @@
 import logging
 import os
 import subprocess
+# TODO: Remove ME
+import random
 
 from polaris_health import Error, MonitorFailed
 from . import BaseMonitor
@@ -18,7 +20,7 @@ class External(BaseMonitor):
 
     """External script monitor base"""
 
-    def __init__(self, port, file_path, result=None, args=None,
+    def __init__(self, port, file_path, result=None, args=None, dynamic_weight=False,
                  interval=10, timeout=5, retries=2):
         """
         args:
@@ -27,6 +29,7 @@ class External(BaseMonitor):
                 starting at /, must be executable
             args: list, additional command line arguments to be passed to
             the external check
+            dynamic_weight: boolean
             result: a string to check against the result of the executed script
                 any other response will mean a failure.
             Other args as per BaseMonitor() spec
@@ -64,11 +67,21 @@ class External(BaseMonitor):
         else:
             self.args = []
         ### result ###
-        if type(result) != str:
-            log_msg = 'result is not set or is not a string'
+        if result is not None:
+            if type(result) != str:
+                log_msg = 'result is not set or is not a string'
+                LOG.error(log_msg)
+                raise Error(log_msg)
+            self.result = result.strip()
+        ### dynamic weight ###
+        # dynamically set the member weight based on the returned value from the
+        # external script.
+        self.dynamic_weight = dynamic_weight
+        if type(dynamic_weight) is not bool:
+            log_msg = 'dynamic_weight is not a boolean'
             LOG.error(log_msg)
             raise Error(log_msg)
-        self.result = result.strip()
+        self.weight = None
 
     def run(self, dst_ip):
         """
@@ -94,12 +107,25 @@ class External(BaseMonitor):
         except subprocess.SubprocessError as e:
             raise MonitorFailed(e)
 
-        if cmd.returncode == 0:
-            if cmd.stdout.rstrip() == self.result:
-                return
-            else:
-                log_msg = ('The external check returned:{} not {}'.format(cmd.stdout.rstrip(), self.result))
-                raise MonitorFailed(log_msg)
-        else:
+        if cmd.returncode != 0:
             log_msg = ('External Check Failed: Reason: {}'.format(cmd.stderr.rstrip()))
+            raise MonitorFailed(log_msg)
+        stdout = cmd.stdout.rstrip()
+        if self.dynamic_weight:
+            try:
+                weight = int(stdout)
+            except ValueError:
+                log_msg = ('External Check Failed:{} cannot set weight is not an integer'.format(stdout))
+                raise MonitorFailed(log_msg)
+            if weight < 0 or weight > 10:
+                log_msg = 'External Check Failed: weight is out of bounds 0-10'
+                raise MonitorFailed(log_msg)
+            else:
+                self.weight = weight
+                return
+        # check the return string matches if we are not updating the weight
+        elif stdout == self.result:
+            return
+        else:
+            log_msg = ('External Check Failed: returned result:{}'.format(stdout))
             raise MonitorFailed(log_msg)
