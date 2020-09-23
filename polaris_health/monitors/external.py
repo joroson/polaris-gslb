@@ -67,12 +67,11 @@ class External(BaseMonitor):
         else:
             self.args = []
         ### result ###
-        if result is not None:
-            if type(result) != str:
-                log_msg = 'result is not set or is not a string'
-                LOG.error(log_msg)
-                raise Error(log_msg)
-            self.result = result.strip()
+        if result is None or type(result) != str:
+            log_msg = 'result is not set or is not a string'
+            LOG.error(log_msg)
+            raise Error(log_msg)
+        self.result = result.strip()
         ### dynamic weight ###
         # dynamically set the member weight based on the returned value from the
         # external script.
