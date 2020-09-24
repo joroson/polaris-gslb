@@ -20,7 +20,7 @@ class External(BaseMonitor):
 
     """External script monitor base"""
 
-    def __init__(self, port, file_path, result=None, args=None, dynamic_weight=False,
+    def __init__(self, port, file_path, result='', args=None, dynamic_weight=False,
                  interval=10, timeout=5, retries=2):
         """
         args:
@@ -67,12 +67,11 @@ class External(BaseMonitor):
         else:
             self.args = []
         ### result ###
-        if result is not None:
-            if type(result) != str:
-                log_msg = 'result is not set or is not a string'
-                LOG.error(log_msg)
-                raise Error(log_msg)
-            self.result = result.strip()
+        self.result = result
+        if type(result) is not str:
+            log_msg = 'result is not a string'
+            LOG.error(log_msg)
+            raise Error(log_msg)
         ### dynamic weight ###
         # dynamically set the member weight based on the returned value from the
         # external script.
@@ -101,16 +100,16 @@ class External(BaseMonitor):
             cmd = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                         timeout=self.timeout)
         except subprocess.TimeoutExpired as e:
-            log_msg = ('command timeout reached: {error}'
-                       .format(error=e))
+            log_msg = ('command timeout reached: {error}'.format(error=e))
             raise MonitorFailed(log_msg)
         except subprocess.SubprocessError as e:
             raise MonitorFailed(e)
 
         if cmd.returncode != 0:
-            log_msg = ('External Check Failed: Reason: {}'.format(cmd.stderr.rstrip()))
+            log_msg = ('External Check Failed: child returned {}, stderr: {}'.format(cmd.returncode, cmd.stderr.rstrip()))
             raise MonitorFailed(log_msg)
-        stdout = cmd.stdout.rstrip()
+
+        stdout = cmd.stdout.rstrip ()
         if self.dynamic_weight:
             try:
                 weight = int(stdout)
