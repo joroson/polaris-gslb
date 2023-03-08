@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-
+import re
 import time
 import json
-import threading 
+import threading
 
 import memcache
 
@@ -10,21 +10,19 @@ from polaris_common import topology, sharedmem
 from polaris_pdns import config
 from .remotebackend import RemoteBackend
 
-
-__all__ = [ 'Polaris' ]
+__all__ = ['Polaris']
 
 # distribution state
 STATE = {}
 # timestamp of the state
 STATE_TS = 0
 # lock for both STATE, STATE_TS sync between Polaris() and StateUpdater() 
-STATE_LOCK = threading.Lock() 
+STATE_LOCK = threading.Lock()
 # how long to sleep after attempting a state update
 STATE_UPDATE_INTERVAL = 0.5
 
 
 class StateUpdater(threading.Thread):
-    
     """StateUpdater updates the global distribution state from shared memory
     on a predefined interval.
     State timestamp only is fetched first, compared to the current timestamp 
@@ -49,7 +47,7 @@ class StateUpdater(threading.Thread):
             self.update_state()
             time.sleep(STATE_UPDATE_INTERVAL)
 
-    def update_state(self):     
+    def update_state(self):
         # fetch state timestamp
         state_ts = self.sm.get(config.BASE['SHARED_MEM_STATE_TIMESTAMP_KEY'])
 
@@ -101,14 +99,14 @@ class StateUpdater(threading.Thread):
 
         return new_state
 
+
 class Polaris(RemoteBackend):
-    
     """Polaris PDNS remote backend.
 
     Distribute queries according to distribution state and load
     balancing method.
     """
-    
+
     def __init__(self):
         super(Polaris, self).__init__()
 
@@ -171,7 +169,7 @@ class Polaris(RemoteBackend):
         # get a pool associated with the qname
         pool_name = STATE['globalnames'][qname]['pool_name']
         pool = STATE['pools'][pool_name]
-       
+
         # use the _default distribution table by default
         dist_table = pool['dist_tables']['_default']
 
@@ -188,8 +186,11 @@ class Polaris(RemoteBackend):
 
                 # lookup the client's region, get_region() will
                 # return None if the region cannot be determined
-                region = topology.get_region(params['remote'], 
-                                             config.TOPOLOGY_MAP)
+                if params['real-remote'] and params['real-remote'] != "0.0.0.0/0":
+                    region = topology.get_region(re.search(r"(.*)(\/\d{1,3}$)", params['real-remote']).group(1),
+                                                 config.TOPOLOGY_MAP)
+                else:
+                    region = topology.get_region(params['remote'], config.TOPOLOGY_MAP)
 
                 # log the time taken to perform the lookup
                 self.log.append(
@@ -222,9 +223,9 @@ class Polaris(RemoteBackend):
         # determine how many records to return
         # which is the minimum of the dist table's num_unique_addrs and 
         # the pool's max_addrs_returned
-        if dist_table['num_unique_addrs'] <= pool['max_addrs_returned']: 
+        if dist_table['num_unique_addrs'] <= pool['max_addrs_returned']:
             num_records_return = dist_table['num_unique_addrs']
-        else:    
+        else:
             num_records_return = pool['max_addrs_returned']
 
         # if we don't have anything to return(all member weights may have
@@ -239,8 +240,9 @@ class Polaris(RemoteBackend):
             self.add_record(qtype='A',
                             # use the original qname from the parameters dict        
                             qname=params['qname'],
+                            real_remote=params['real-remote'],
                             content=dist_table['rotation'][dist_table['index']],
-                            ttl=STATE['globalnames'][qname]['ttl'])    
+                            ttl=STATE['globalnames'][qname]['ttl'])
 
             # increment index
             dist_table['index'] += 1
@@ -278,6 +280,6 @@ class Polaris(RemoteBackend):
         self.add_record(qtype='SOA',
                         # use the original qname from parameters dict
                         qname=params['qname'],
+                        real_remote=params['real-remote'],
                         content=content,
                         ttl=config.BASE['SOA_TTL'])
-

@@ -7,13 +7,11 @@ import time
 
 from polaris_pdns import config
 
-
-__all__ = [ 'RemoteBackend' ]
+__all__ = ['RemoteBackend']
 
 
 class RemoteBackend:
-
-    """PowerDNS Remote Backend handler 
+    """PowerDNS Remote Backend handler
 
     Implements pipe handler for PowerDNS Remote Backend JSON API:      
     https://doc.powerdns.com/md/authoritative/backend-remote/
@@ -50,7 +48,7 @@ class RemoteBackend:
         """Can be overwritten by a child class"""
         return
 
-    def add_record(self, qtype, qname, content, ttl):
+    def add_record(self, qtype, qname, real_remote, content, ttl):
         """Add a record to the response (self.result)
 
         args:
@@ -67,6 +65,7 @@ class RemoteBackend:
         self.result.append({
             'qtype': qtype,
             'qname': qname,
+            'real-remote': real_remote,
             'content': content,
             'ttl': ttl
         })
@@ -89,13 +88,13 @@ class RemoteBackend:
         writes JSON responses to stdout
 
         """
-        while(True):
+        while (True):
             # reset result and log
             self.result = False
             self.log = []
 
             # get the request string, strip the ending "\n"
-            self.__request  = self.__reader.readline().rstrip()
+            self.__request = self.__reader.readline().rstrip()
 
             # store the start time
             self._start_time = time.time()
@@ -127,20 +126,20 @@ class RemoteBackend:
                 continue
 
             # DEBUG ONLY
-            #method(obj['parameters'])
-            #self.__write_response()
-            #continue
-            
+            # method(obj['parameters'])
+            # self.__write_response()
+            # continue
+
             # execute method
             try:
-                method(obj['parameters'])      
+                method(obj['parameters'])
             except Exception:
                 self.result = False
                 self.log.append('error: method "{}" failed to execute'
                                 .format(method_name, self.__request))
                 self.__write_response()
                 continue
-            
+
             # write response
             self.__write_response()
 
@@ -177,10 +176,9 @@ class RemoteBackend:
             # which can make it hard to read
             # join log entries into a single string
             # response 'log' field must still be an array
-            obj['log'] = [ ' '.join(self.log) ]
+            obj['log'] = [' '.join(self.log)]
 
         # send the response to pdns
         self.__writer.write(json.dumps(obj))
         self.__writer.write('\n')
         self.__writer.flush()
-
