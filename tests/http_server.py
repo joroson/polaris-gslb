@@ -1,4 +1,4 @@
-# #!/usr/bin/env python3
+
 #!/opt/python-3.5.2/bin/python3
  
 from http.server import BaseHTTPRequestHandler, HTTPServer
