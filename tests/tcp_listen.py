@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
- 
+# #!/usr/bin/env python3
+#!/opt/python-3.5.2/bin/python3
+
 import socket
     
     

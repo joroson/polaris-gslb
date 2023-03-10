@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+# #!/usr/bin/env python3
+#!/opt/python-3.5.2/bin/python3
 
 import yaml
 
@@ -7,7 +8,7 @@ obj = {
             'www-example': {
                     'monitor': 'tcp',
                     'monitor_params': {
-                            }
+                            },
                     'lb_method': 'wrr',
                     'max_addrs_returned': 1024,
                     'members': []
