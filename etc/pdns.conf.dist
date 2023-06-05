@@ -37,3 +37,8 @@ negquery-cache-ttl=0
 # query-cache-ttl=20
 query-cache-ttl=0
 
+#################################
+# edns-subnet-processing
+# https://doc.powerdns.com/authoritative/PowerDNS-Authoritative.pdf#section.19.52
+
+edns-subnet-processing=yes

@@ -67,6 +67,7 @@ class RemoteBackend:
         self.result.append({
             'qtype': qtype,
             'qname': qname,
+            'real-remote': real_remote,
             'content': content,
             'ttl': ttl
         })
@@ -95,7 +96,7 @@ class RemoteBackend:
             self.log = []
 
             # get the request string, strip the ending "\n"
-            self.__request  = self.__reader.readline().rstrip()
+            self.__request = self.__reader.readline().rstrip()
 
             # store the start time
             self._start_time = time.time()

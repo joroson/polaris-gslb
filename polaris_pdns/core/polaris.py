@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 import time
 import json
 import threading 
@@ -188,8 +189,11 @@ class Polaris(RemoteBackend):
 
                 # lookup the client's region, get_region() will
                 # return None if the region cannot be determined
-                region = topology.get_region(params['remote'], 
-                                             config.TOPOLOGY_MAP)
+                if params['real-remote'] and params['real-remote'] != "0.0.0.0/0":
+                    region = topology.get_region(re.search(r"(.*)(\/\d{1,3}$)", params['real-remote']).group(1),
+                                                 config.TOPOLOGY_MAP)
+                else:
+                    region = topology.get_region(params['remote'], config.TOPOLOGY_MAP)
 
                 # log the time taken to perform the lookup
                 self.log.append(
