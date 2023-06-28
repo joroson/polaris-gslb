@@ -243,6 +243,7 @@ class Polaris(RemoteBackend):
             self.add_record(qtype='A',
                             # use the original qname from the parameters dict        
                             qname=params['qname'],
+                            real_remote=params['real-remote'],
                             content=dist_table['rotation'][dist_table['index']],
                             ttl=STATE['globalnames'][qname]['ttl'])    
 
