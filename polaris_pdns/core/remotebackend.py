@@ -64,6 +64,8 @@ class RemoteBackend:
         if not isinstance(self.result, list):
             self.result = []
 
+        qname = qname.lower()
+        
         self.result.append({
             'qtype': qtype,
             'qname': qname,
