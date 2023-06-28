@@ -64,6 +64,7 @@ class RemoteBackend:
         if not isinstance(self.result, list):
             self.result = []
 
+        # TODO: Remove this if it doesn't solve the uppercase request issue.
         qname = qname.lower()
         
         self.result.append({
@@ -78,8 +79,8 @@ class RemoteBackend:
     ### internal do_ methods, do not override ###
     #############################################
     def do_initialize(self, params):
-        """Initialization handler
-
+        """
+        Initialization handler
         """
         self.log.append('Polaris Remote Backend initialized')
         self.result = True
