@@ -50,7 +50,7 @@ class RemoteBackend:
         """Can be overwritten by a child class"""
         return
 
-    def add_record(self, qtype, qname, content, ttl):
+    def add_record(self, qtype, qname, real_remote, content, ttl):
         """Add a record to the response (self.result)
 
         args:
