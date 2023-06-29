@@ -11,7 +11,7 @@ LOG.addHandler(logging.NullHandler())
 
 MAX_NAME_LEN = 256
 MAX_POOL_NAME_LEN = 256
-MIN_TTL = 1
+MIN_TTL = 0
 
 class GlobalName:
 
