@@ -283,6 +283,7 @@ class Polaris(RemoteBackend):
         self.add_record(qtype='SOA',
                         # use the original qname from parameters dict
                         qname=params['qname'],
+                        real_remote=params['real-remote'],
                         content=content,
                         ttl=config.BASE['SOA_TTL'])
 
