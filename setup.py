@@ -13,7 +13,7 @@ import shutil
 import setuptools
 
 
-VERSION = '0.6.666'
+VERSION = '0.7.1'
 
 
 def main():
