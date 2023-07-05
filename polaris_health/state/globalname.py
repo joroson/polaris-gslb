@@ -35,7 +35,7 @@ class GlobalName:
             raise Error(log_msg)
 
         # pool_name
-        self.pool_name = pool_name
+        self.pool_name = pool_name.lower() # lowcase poolname
         if (not isinstance(pool_name, str) or len(pool_name) == 0
                 or len(pool_name) > MAX_POOL_NAME_LEN):
             log_msg = ('pool_name "{}" must be a non-empty str, {} chars max'
